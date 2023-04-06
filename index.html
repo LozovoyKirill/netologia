@@ -1,0 +1,606 @@
+import UIKit
+import Darwin
+
+enum AllAccessories: String {
+    case alarm = "Сигнализация"
+    case tining = "Тонировка"
+    case disk = "Спортивные диски"
+    case firstAidKit = "Аптечка"
+    case fireExtinguisher = "Огнетушитель"
+}
+
+var catalogAccesories = [AllAccessories.alarm.rawValue, AllAccessories.tining.rawValue, AllAccessories.disk.rawValue]
+var emerergencyPack = [AllAccessories.firstAidKit, AllAccessories.fireExtinguisher]
+
+protocol Car: Equatable {
+    var model: String { get }
+    var color: String { get }
+    var buildDate: Int { get }
+    var price: Int { get set }
+    var installedAccessories: [AllAccessories.RawValue] { get set }
+    var isServiced: Bool { get set }
+}
+
+protocol Dealership {
+    var name: String { get }
+    var showroomCapacity: Int { get }
+    var stockCars: [Model] { get set }
+    var showroomCars: [Model] { get set }
+    var cars: [Model] { get set }
+    var fabrik: [Model] { get set }
+    func offerAccesories(_ : [AllAccessories.RawValue])
+    func presaleService(_ car: inout Model)
+    func addToShowroom(_ car: inout Model)
+    func sellCar(_ car: inout Model)
+    func orderCar()
+    
+}
+
+struct Model: Car {
+    var model: String
+    var color: String
+    var buildDate: Int
+    var price: Int
+    var installedAccessories: [AllAccessories.RawValue]
+    var isServiced: Bool
+    func carInfo () {
+        print("Model: \(model), color: \(color), buildDate: \(buildDate), price: \(price) rub., accessories: \(installedAccessories) isServiced: \(isServiced).")
+    }
+}
+
+
+var lexus = Model(model: "Lexus UX200", color: "Red", buildDate: 2022, price: 7000, installedAccessories: [AllAccessories.alarm.rawValue], isServiced: true)
+var lexus1 = Model(model: "Lexus RX300", color: "White", buildDate: 2020, price: 8000, installedAccessories: [AllAccessories.disk.rawValue], isServiced: true)
+var lexus2 = Model(model: "Lexus RT300", color: "Blue", buildDate: 2023, price: 10000, installedAccessories: [], isServiced: false)
+var volvo = Model(model: "Volvo V90", color: "White", buildDate: 2022, price: 2700, installedAccessories: [AllAccessories.tining.rawValue], isServiced: true)
+var volvo1 = Model(model: "Volvo V70", color: "Black", buildDate: 2023, price: 3700, installedAccessories: [AllAccessories.disk.rawValue], isServiced: true)
+var bmw = Model(model: "Bmw X1", color: "White", buildDate: 2018, price: 1300, installedAccessories: [AllAccessories.disk.rawValue], isServiced: true)
+var bmw1 = Model(model: "Bmw X3", color: "Grey", buildDate: 2017, price: 950, installedAccessories: [AllAccessories.alarm.rawValue], isServiced: false)
+var honda = Model(model: "Honda Accord", color: "Red", buildDate: 2020, price: 1500, installedAccessories: [AllAccessories.alarm.rawValue], isServiced: true)
+var honda1 = Model(model: "Honda HR-V", color: "Blue", buildDate: 2018, price: 800, installedAccessories: [AllAccessories.tining.rawValue], isServiced: false)
+var audi = Model(model: "Audi A3", color: "blue", buildDate: 2015, price: 1200, installedAccessories: [AllAccessories.tining.rawValue, AllAccessories.alarm.rawValue], isServiced: false)
+var audi1 = Model(model: "Audi Q3", color: "Yellow", buildDate: 2020, price: 3000, installedAccessories: [AllAccessories.alarm.rawValue], isServiced: true)
+
+class LexusDealer: Dealership {
+    var name: String //= "Lexus"
+    var showroomCapacity: Int //= 2//вместитмость салона
+    var stockCars: [Model] //= [lexus]// машины на парковке
+    var showroomCars: [Model] //= [lexus1]//нахъ в автосалоне
+    var cars: [Model] //= [lexus, lexus1]//список всех машин
+    var fabrik: [Model]// = [lexus2]// машины на заводе
+    init(name: String, showroomCapacity: Int, stockCars: [Model], showroomCars: [Model], cars: [Model], fabrik: [Model]) {
+        self.name = name
+        self.showroomCapacity = showroomCapacity
+        self.stockCars = stockCars
+        self.showroomCars = showroomCars
+        self.cars = cars
+        self.fabrik = fabrik
+    }
+    
+    func offerAccesories(_: [AllAccessories.RawValue]) {
+        print("Вы можете установить на машину \(catalogAccesories).")
+    }
+    
+    func presaleService(_ car: inout Model)  {
+        if car.isServiced == true {print("\(car.model) предпродажная подготовка не требуется.")}
+        else {
+            print("\(car.model) ушла на предпродажную подготовку.")
+            car.isServiced = true
+        }
+    }
+    
+    func addToShowroom(_ car: inout Model) {
+        if showroomCapacity <= showroomCars.count {
+            print("Салон заполнен.")}
+        else if stockCars.firstIndex(where:  {$0 == car}) != nil {
+            presaleService(&car)
+            stockCars.removeAll(where: {$0 == car})
+            showroomCars.append(car)
+            print("\(car.model) перегнана с парковки в автосалон.")
+        }
+        else {
+            print("\(car.model) нет на стоянке")}
+    }
+    //из условия задачи машина продается из шоурума
+    func sellCar(_ car: inout Model) {
+        if showroomCars.firstIndex(where:  {$0 == car}) != nil {
+            presaleService(&car)
+            offerAccesories(catalogAccesories)
+            for item in catalogAccesories{
+                if car.installedAccessories.firstIndex(where: {$0 == item}) == nil {
+                    car.installedAccessories.append(item)
+                    print ("\(item) добавлена в комплектацию \(car.model).")
+                 }
+            }
+            showroomCars.removeAll(where: {$0 == car})
+            cars.removeAll(where: {$0 == car})
+            print("\(car.model) продана из автосалона.")
+        }
+        else {print ("\(car.model) не может быть продана из автосалона.")}
+    }
+    func orderCar() {
+        if fabrik.randomElement() != nil {
+            var newCar = fabrik.randomElement()
+            fabrik.removeAll(where: {$0 == newCar})
+            stockCars.append(newCar!)
+            cars.append(newCar!)
+            print("\(newCar!.model) передана в дилерский центр на парковку.")
+        }
+        else {print ("На заводе нет машин.")}
+    }
+}
+
+var lexusDelearCentre = LexusDealer(name: "Lexus", showroomCapacity: 2, stockCars: [lexus], showroomCars: [lexus1], cars: [lexus, lexus1], fabrik: [lexus2])
+lexusDelearCentre.offerAccesories(catalogAccesories)
+lexusDelearCentre.presaleService(&lexus1)
+lexusDelearCentre.addToShowroom(&lexus)
+lexusDelearCentre.sellCar(&lexus)
+lexusDelearCentre.cars
+lexusDelearCentre.orderCar()
+lexusDelearCentre.cars
+lexusDelearCentre.sellCar(&lexus)
+
+class VolvoDealer: Dealership {
+    var name: String //= "Lexus"
+    var showroomCapacity: Int //= 2//вместитмость салона
+    var stockCars: [Model] //= [lexus]// машины на парковке
+    var showroomCars: [Model] //= [lexus1]//нахъ в автосалоне
+    var cars: [Model] //= [lexus, lexus1]//список всех машин
+    var fabrik: [Model]// = [lexus2]// машины на заводе
+    init(name: String, showroomCapacity: Int, stockCars: [Model], showroomCars: [Model], cars: [Model], fabrik: [Model]) {
+        self.name = name
+        self.showroomCapacity = showroomCapacity
+        self.stockCars = stockCars
+        self.showroomCars = showroomCars
+        self.cars = cars
+        self.fabrik = fabrik
+    }
+    
+    func offerAccesories(_: [AllAccessories.RawValue]) {
+        print("Вы можете установить на машину \(catalogAccesories).")
+    }
+    
+    func presaleService(_ car: inout Model)  {
+        if car.isServiced == true {print("\(car.model) предпродажная подготовка не требуется.")}
+        else {
+            print("\(car.model) ушла на предпродажную подготовку.")
+            car.isServiced = true
+        }
+    }
+    func addToShowroom(_ car: inout Model) {
+        if showroomCapacity <= showroomCars.count {
+            print("Салон заполнен.")}
+        else if stockCars.firstIndex(where:  {$0 == car}) != nil {
+            presaleService(&car)
+            stockCars.removeAll(where: {$0 == car})
+            showroomCars.append(car)
+            print("\(car.model) перегнана с парковки в автосалон.")
+        }
+        else {
+            print("\(car.model) нет на стоянке")}
+    }
+    
+    //из условия задачи машина продается из шоурума
+    func sellCar(_ car: inout Model) {
+        if showroomCars.firstIndex(where:  {$0 == car}) != nil {
+            presaleService(&car)
+            offerAccesories(catalogAccesories)
+            for item in catalogAccesories{
+                if car.installedAccessories.firstIndex(where: {$0 == item}) == nil {
+                    car.installedAccessories.append(item)
+                    print ("\(item) добавлена в комплектацию \(car.model).")
+               }
+            }
+            showroomCars.removeAll(where: {$0 == car})
+            cars.removeAll(where: {$0 == car})
+            print("\(car.model) продана из автосалона.")
+        }
+        else {print ("\(car.model) не может быть продана из автосалона.")}
+    }
+    func orderCar() {
+        if fabrik.randomElement() != nil {
+            var newCar = fabrik.randomElement()
+            fabrik.removeAll(where: {$0 == newCar})
+            stockCars.append(newCar!)
+            cars.append(newCar!)
+            print("\(newCar!.model) передана в дилерский центр на парковку.")
+        }
+        else {print ("На заводе нет машин.")}
+    }
+}
+
+var volvoDelearCentre = VolvoDealer(name: "Volvo", showroomCapacity: 2, stockCars: [volvo], showroomCars: [volvo1], cars: [volvo, volvo1], fabrik: [])
+
+class BmwDealer: Dealership {
+    var name: String //= "Lexus"
+    var showroomCapacity: Int //= 2//вместитмость салона
+    var stockCars: [Model] //= [lexus]// машины на парковке
+    var showroomCars: [Model] //= [lexus1]//нахъ в автосалоне
+    var cars: [Model] //= [lexus, lexus1]//список всех машин
+    var fabrik: [Model]// = [lexus2]// машины на заводе
+    init(name: String, showroomCapacity: Int, stockCars: [Model], showroomCars: [Model], cars: [Model], fabrik: [Model]) {
+        self.name = name
+        self.showroomCapacity = showroomCapacity
+        self.stockCars = stockCars
+        self.showroomCars = showroomCars
+        self.cars = cars
+        self.fabrik = fabrik
+    }
+    
+    func offerAccesories(_: [AllAccessories.RawValue]) {
+        print("Вы можете установить на машину \(catalogAccesories).")
+    }
+    
+    func presaleService(_ car: inout Model)  {
+        if car.isServiced == true {print("\(car.model) предпродажная подготовка не требуется.")}
+        else {
+            print("\(car.model) ушла на предпродажную подготовку.")
+            car.isServiced = true
+        }
+    }
+    func addToShowroom(_ car: inout Model) {
+        if showroomCapacity <= showroomCars.count {
+            print("Салон заполнен.")}
+        else if stockCars.firstIndex(where:  {$0 == car}) != nil {
+            presaleService(&car)
+            stockCars.removeAll(where: {$0 == car})
+            showroomCars.append(car)
+            print("\(car.model) перегнана с парковки в автосалон.")
+        }
+        else {
+            print("\(car.model) нет на стоянке")}
+    }
+    
+    //из условия задачи машина продается из шоурума
+    func sellCar(_ car: inout Model) {
+        if showroomCars.firstIndex(where:  {$0 == car}) != nil {
+            presaleService(&car)
+            offerAccesories(catalogAccesories)
+            for item in catalogAccesories{
+                if car.installedAccessories.firstIndex(where: {$0 == item}) == nil {
+                    car.installedAccessories.append(item)
+                    print ("\(item) добавлена в комплектацию \(car.model).")
+                }
+            }
+            showroomCars.removeAll(where: {$0 == car})
+            cars.removeAll(where: {$0 == car})
+            print("\(car.model) продана из автосалона.")
+        }
+        else {print ("\(car.model) не может быть продана из автосалона.")}
+    }
+    func orderCar() {
+        if fabrik.randomElement() != nil {
+            var newCar = fabrik.randomElement()
+            fabrik.removeAll(where: {$0 == newCar})
+            stockCars.append(newCar!)
+            cars.append(newCar!)
+            print("\(newCar!.model) передана в дилерский центр на парковку.")
+        }
+        else {print ("На заводе нет машин.")}
+    }
+}
+
+var bmwDealerCentre = BmwDealer(name: "Bmw", showroomCapacity: 2, stockCars: [bmw], showroomCars: [bmw1], cars: [bmw, bmw1], fabrik: [])
+
+class HondaDealer: Dealership {
+    var name: String //= "Lexus"
+    var showroomCapacity: Int //= 2//вместитмость салона
+    var stockCars: [Model] //= [lexus]// машины на парковке
+    var showroomCars: [Model] //= [lexus1]//нахъ в автосалоне
+    var cars: [Model] //= [lexus, lexus1]//список всех машин
+    var fabrik: [Model]// = [lexus2]// машины на заводе
+    init(name: String, showroomCapacity: Int, stockCars: [Model], showroomCars: [Model], cars: [Model], fabrik: [Model]) {
+        self.name = name
+        self.showroomCapacity = showroomCapacity
+        self.stockCars = stockCars
+        self.showroomCars = showroomCars
+        self.cars = cars
+        self.fabrik = fabrik
+    }
+    
+    func offerAccesories(_: [AllAccessories.RawValue]) {
+        print("Вы можете установить на машину \(catalogAccesories).")
+    }
+    
+    func presaleService(_ car: inout Model)  {
+        if car.isServiced == true {print("\(car.model) предпродажная подготовка не требуется.")}
+        else {
+            print("\(car.model) ушла на предпродажную подготовку.")
+            car.isServiced = true
+        }
+    }
+    
+    func addToShowroom(_ car: inout Model) {
+        if showroomCapacity <= showroomCars.count {
+            print("Салон заполнен.")}
+        else if stockCars.firstIndex(where:  {$0 == car}) != nil {
+            presaleService(&car)
+            stockCars.removeAll(where: {$0 == car})
+            showroomCars.append(car)
+            print("\(car.model) перегнана с парковки в автосалон.")
+        }
+        else {
+            print("\(car.model) нет на стоянке")}
+    }
+    
+    //из условия задачи машина продается из шоурума
+    func sellCar(_ car: inout Model) {
+        if showroomCars.firstIndex(where:  {$0 == car}) != nil {
+            presaleService(&car)
+            offerAccesories(catalogAccesories)
+            for item in catalogAccesories{
+                if car.installedAccessories.firstIndex(where: {$0 == item}) == nil {
+                    car.installedAccessories.append(item)
+                    print ("\(item) добавлена в комплектацию \(car.model).")
+                }
+            }
+            showroomCars.removeAll(where: {$0 == car})
+            cars.removeAll(where: {$0 == car})
+            print("\(car.model) продана из автосалона.")
+        }
+        else {print ("\(car.model) не может быть продана из автосалона.")}
+    }
+    
+    func orderCar() {
+        if fabrik.randomElement() != nil {
+            var newCar = fabrik.randomElement()
+            fabrik.removeAll(where: {$0 == newCar})
+            stockCars.append(newCar!)
+            cars.append(newCar!)
+            print("\(newCar!.model) передана в дилерский центр на парковку.")
+        }
+        else {print ("На заводе нет машин.")}
+    }
+}
+
+var hondaDealerCentre = HondaDealer(name: "Honda", showroomCapacity: 1, stockCars: [honda1], showroomCars: [honda], cars: [honda,honda1], fabrik: [])
+
+class AudiDealer: Dealership {
+    var name: String //= "Lexus"
+    var showroomCapacity: Int //= 2//вместитмость салона
+    var stockCars: [Model] //= [lexus]// машины на парковке
+    var showroomCars: [Model] //= [lexus1]//нахъ в автосалоне
+    var cars: [Model] //= [lexus, lexus1]//список всех машин
+    var fabrik: [Model]// = [lexus2]// машины на заводе
+    init(name: String, showroomCapacity: Int, stockCars: [Model], showroomCars: [Model], cars: [Model], fabrik: [Model]) {
+        self.name = name
+        self.showroomCapacity = showroomCapacity
+        self.stockCars = stockCars
+        self.showroomCars = showroomCars
+        self.cars = cars
+        self.fabrik = fabrik
+    }
+    
+    func offerAccesories(_: [AllAccessories.RawValue]) {
+        print("Вы можете установить на машину \(catalogAccesories).")
+    }
+    
+    func presaleService(_ car: inout Model)  {
+        if car.isServiced == true {print("\(car.model) предпродажная подготовка не требуется.")}
+        else {
+            print("\(car.model) ушла на предпродажную подготовку.")
+            car.isServiced = true
+        }
+    }
+    
+    func addToShowroom(_ car: inout Model) {
+        if showroomCapacity <= showroomCars.count {
+            print("Салон заполнен.")}
+        else if stockCars.firstIndex(where:  {$0 == car}) != nil {
+            presaleService(&car)
+            stockCars.removeAll(where: {$0 == car})
+            showroomCars.append(car)
+            print("\(car.model) перегнана с парковки в автосалон.")
+        }
+        else {
+            print("\(car.model) нет на стоянке")}
+    }
+    //из условия задачи машина продается из шоурума
+    func sellCar(_ car: inout Model) {
+        if showroomCars.firstIndex(where:  {$0 == car}) != nil {
+            presaleService(&car)
+            offerAccesories(catalogAccesories)
+            for item in catalogAccesories{
+                if car.installedAccessories.firstIndex(where: {$0 == item}) == nil {
+                    car.installedAccessories.append(item)
+                    print ("\(item) добавлена в комплектацию \(car.model).")
+                }
+            }
+            showroomCars.removeAll(where: {$0 == car})
+            cars.removeAll(where: {$0 == car})
+            print("\(car.model) продана из автосалона.")
+        }
+        else {print ("\(car.model) не может быть продана из автосалона.")}
+    }
+    
+    func orderCar() {
+        if fabrik.randomElement() != nil {
+            var newCar = fabrik.randomElement()
+            fabrik.removeAll(where: {$0 == newCar})
+            stockCars.append(newCar!)
+            cars.append(newCar!)
+            print("\(newCar!.model) передана в дилерский центр на парковку.")
+        }
+        else {print ("На заводе нет машин.")}
+    }
+}
+
+var audidealerCentre = AudiDealer(name: "Audi", showroomCapacity: 2, stockCars: [audi1], showroomCars: [audi], cars: [audi, audi1], fabrik: [])
+
+var centreArray = [lexusDelearCentre, volvoDelearCentre, bmwDealerCentre, hondaDealerCentre, audidealerCentre] as [Dealership]
+
+for centre in centreArray {
+    switch centre {
+    case is LexusDealer:
+        print("Lexus - Неудержимое стремление к совершенству.")
+    case is VolvoDealer:
+        print("Volvo - Вольво.Для жизни.")
+    case is BmwDealer:
+        print("Bmw - С удовольствием за рулем.")
+    case is HondaDealer:
+        print("Honda - Сначала человек, потом машина.")
+    case is AudiDealer:
+        print("Audi - Превосходство высоких технологий.")
+    default:
+        break
+    }
+}
+
+enum SaleCar: Error {
+    case notSaleCar
+    case notEnoughPlace
+    case noCarOnParking
+}
+protocol SpecialOffer {
+    func addEmergencyPack()
+    func makeSpecialOffer() throws
+    
+}
+
+extension LexusDealer: SpecialOffer {
+   func addEmergencyPack() {
+        for i in lexusDelearCentre.cars.indices {
+            for item in emerergencyPack {
+                if lexusDelearCentre.cars[i].installedAccessories.firstIndex(where: {$0 == item.rawValue}) == nil {
+                    lexusDelearCentre.cars[i].installedAccessories.append(item.rawValue)
+                    print ("\(item.rawValue) добавлена в комплектацию \(lexusDelearCentre.cars[i].model).")
+                }
+            }
+        }
+    }
+    //задача 1 как создавать свои ошибки
+    func makeSpecialOffer() throws {
+        for i in lexusDelearCentre.cars.indices {
+            guard lexusDelearCentre.cars[i].buildDate < 2023 else {
+                throw SaleCar.notSaleCar}
+            lexusDelearCentre.cars[i].price = lexusDelearCentre.cars[i].price / 100 * 85
+            print("Итоговая стоимость автомобиля \(lexusDelearCentre.cars[i].model) с учетом скидки 15 % составляет \(lexusDelearCentre.cars[i].price) рублей.")
+            for item in emerergencyPack{
+                if lexusDelearCentre.cars[i].installedAccessories.firstIndex(where: {$0 == item.rawValue}) == nil {
+                    lexusDelearCentre.cars[i].installedAccessories.append(item.rawValue)
+                    print ("\(item.rawValue) добавлена в комплектацию \(lexusDelearCentre.cars[i].model).")
+                }
+            }
+        }
+    }
+}
+
+do {
+    try lexusDelearCentre.makeSpecialOffer()
+} catch SaleCar.notSaleCar {
+    print("Машина не подпадает под условие акции")
+}
+lexusDelearCentre.presaleService(&lexus)
+//lexusDelearCentre.makeSpecialOffer()
+lexusDelearCentre.cars
+lexusDelearCentre.stockCars
+lexusDelearCentre.showroomCars
+lexusDelearCentre.cars
+lexusDelearCentre.addEmergencyPack()//выводится сообщение что аптечки добавлены
+print("----------------")
+print(lexus2)//в списке аксессуаров аптечки нет
+print(lexusDelearCentre.cars[2])//в списке аксессуаров есть
+print("----------------")
+lexusDelearCentre.addEmergencyPack()//повторно вызываю метод, но сообщения о добавлении доп акссесуаров не выводится, значит метод видет, что они установлены, как так?
+//lexusDelearCentre.makeSpecialOffer()
+lexusDelearCentre.sellCar(&lexus)
+lexus1.installedAccessories
+lexusDelearCentre.presaleService(&lexus1)
+lexus1.installedAccessories
+lexusDelearCentre.offerAccesories(catalogAccesories)
+lexusDelearCentre.sellCar(&lexus1)
+lexusDelearCentre.cars
+
+extension HondaDealer: SpecialOffer {
+    func addEmergencyPack() {
+        for i in hondaDealerCentre.cars.indices {
+            for item in emerergencyPack {
+                if hondaDealerCentre.cars[i].installedAccessories.firstIndex(where: {$0 == item.rawValue}) == nil {
+                    hondaDealerCentre.cars[i].installedAccessories.append(item.rawValue)
+                    print ("\(item.rawValue) добавлена в комплектацию \(hondaDealerCentre.cars[i].model).")
+                }
+            }
+        }
+    }
+    func makeSpecialOffer() {
+        for i in hondaDealerCentre.cars.indices {
+            if hondaDealerCentre.cars[i].buildDate < 2023 {
+                hondaDealerCentre.cars[i].price = hondaDealerCentre.cars[i].price / 100 * 85
+                print("Итоговая стоимость автомобиля \(hondaDealerCentre.cars[i].model) с учетом скидки 15 % составляет \(hondaDealerCentre.cars[i].price) рублей.")
+                for item in emerergencyPack{
+                    if hondaDealerCentre.cars[i].installedAccessories.firstIndex(where: {$0 == item.rawValue}) == nil {
+                        hondaDealerCentre.cars[i].installedAccessories.append(item.rawValue)
+                        print ("\(item.rawValue) добавлена в комплектацию \(hondaDealerCentre.cars[i].model).")
+                    }
+                }
+            }
+        }
+    }
+}
+
+hondaDealerCentre.addEmergencyPack()
+hondaDealerCentre.makeSpecialOffer()
+
+extension BmwDealer: SpecialOffer {
+    func addEmergencyPack() {
+        for i in bmwDealerCentre.cars.indices {
+            for item in emerergencyPack {
+                if bmwDealerCentre.cars[i].installedAccessories.firstIndex(where: {$0 == item.rawValue}) == nil {
+                    bmwDealerCentre.cars[i].installedAccessories.append(item.rawValue)
+                    print ("\(item.rawValue) добавлена в комплектацию \(bmwDealerCentre.cars[i].model).")
+                }
+            }
+        }
+    }
+    
+    func makeSpecialOffer() {
+        for i in bmwDealerCentre.cars.indices {
+            if bmwDealerCentre.cars[i].buildDate < 2023 {
+                bmwDealerCentre.cars[i].price = bmwDealerCentre.cars[i].price / 100 * 85
+                print("Итоговая стоимость автомобиля \(bmwDealerCentre.cars[i].model) с учетом скидки 15 % составляет \(bmwDealerCentre.cars[i].price) рублей.")
+                for item in emerergencyPack{
+                    if bmwDealerCentre.cars[i].installedAccessories.firstIndex(where: {$0 == item.rawValue}) == nil {
+                        bmwDealerCentre.cars[i].installedAccessories.append(item.rawValue)
+                        print ("\(item.rawValue) добавлена в комплектацию \(bmwDealerCentre.cars[i].model).")
+                    }
+                }
+            }
+        }
+    }
+}
+
+bmwDealerCentre.makeSpecialOffer()
+//задача 2 Как создавать свои ошибки
+func makeSpecialOfferAndReplace() throws {
+    for i in bmwDealerCentre.cars.indices {
+        guard bmwDealerCentre.cars[i].buildDate < 2023 else {
+            throw SaleCar.notSaleCar}
+        bmwDealerCentre.cars[i].price = bmwDealerCentre.cars[i].price / 100 * 85
+        print("Итоговая стоимость автомобиля \(bmwDealerCentre.cars[i].model) с учетом скидки 15 % составляет \(bmwDealerCentre.cars[i].price) рублей.")
+        for item in emerergencyPack{
+            if bmwDealerCentre.cars[i].installedAccessories.firstIndex(where: {$0 == item.rawValue}) == nil {
+                bmwDealerCentre.cars[i].installedAccessories.append(item.rawValue)
+                print ("\(item.rawValue) добавлена в комплектацию \(bmwDealerCentre.cars[i].model).")
+            }
+        }
+        guard bmwDealerCentre.showroomCapacity > bmwDealerCentre.showroomCars.count else {
+            throw SaleCar.notEnoughPlace}
+        guard bmwDealerCentre.stockCars.firstIndex(where:  {$0 == bmwDealerCentre.cars[i]}) != nil else {
+            throw SaleCar.notSaleCar}
+        bmwDealerCentre.stockCars.removeAll(where: {$0 == bmwDealerCentre.cars[i]})
+        bmwDealerCentre.showroomCars.append(bmwDealerCentre.cars[i])
+        print("\(bmwDealerCentre.cars[i].model) перегнана с парковки в автосалон.")
+    }
+}
+do {
+    try makeSpecialOfferAndReplace()
+} catch
+    SaleCar.notSaleCar
+{ print("Машина не подпадает под условие акции.")
+} catch
+    SaleCar.notEnoughPlace
+{ print("Салон заполнен.")
+} catch
+    SaleCar.noCarOnParking
+{ print("Машина отсутствует на парковке")
+}
